@@ -5,6 +5,7 @@
 #include "mask_mode_cuda.cu"
 
 at::Tensor mask_mode_cuda(torch::Tensor tensor_a, torch::Tensor tensor_mask, int grid_size, int block_size);
+at::Tensor mode_cuda(torch::Tensor tensor_a, int grid_size, int block_size);
 
 #define MAX_BLOCK_SIZE 1024
 #define MAX_GRID_SIZE 65536
@@ -31,9 +32,22 @@ at::Tensor mask_mode(
     return result;
 }
 
+at::Tensor mode(
+    torch::Tensor tensor_in) {
+    CHECK_INPUT(tensor_in);
+    CHECK_RANGE(tensor_in);
+    
+    int grid_size = tensor_in.size(0);
+    int block_size = tensor_in.size(1) < MAX_BLOCK_SIZE ? tensor_in.size(1) : MAX_BLOCK_SIZE;
+
+    auto result = mode_cuda(tensor_in, grid_size, block_size);
+    return result;
+}
+
 
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("mask_mode", &mask_mode, "custom mode forward");
+  m.def("mode", &mode, "custom mode forward");
 //   m.def("backward", &toy_matmul_backward, "Toy mamtul backward");
 }
